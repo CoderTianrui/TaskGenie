@@ -57,10 +57,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Create Firebase service account JSON
+      run: |
+        echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > firebase-service-account.json
+        echo "FIREBASE_SERVICE_ACCOUNT=$(cat firebase-service-account.json)" >> $GITHUB_ENV
+    
     - name: Run tests with pytest
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       run: |
         pytest tests/ --cov=./ --cov-report=xml
     
@@ -69,3 +73,7 @@ jobs:
       with:
         file: ./coverage.xml
         fail_ci_if_error: true
+
+    - name: Cleanup service account
+      if: always()
+      run: rm -f firebase-service-account.json

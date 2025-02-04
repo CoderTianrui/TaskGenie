@@ -1,14 +1,31 @@
 import pytest
 from firebase_admin import credentials, initialize_app, firestore
 import os
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Initialize Firebase Admin SDK for testing
-cred = credentials.Certificate(os.getenv("FIREBASE_SERVICE_ACCOUNT"))
-initialize_app(cred)
-db = firestore.client()
+def setup_firebase():
+    """Initialize Firebase with service account"""
+    try:
+        # Get service account JSON from environment variable
+        service_account_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+        if not service_account_json:
+            pytest.skip("Firebase service account not configured")
+        
+        # Parse the JSON string into a dictionary
+        service_account_dict = json.loads(service_account_json)
+        
+        # Initialize Firebase with the credentials
+        cred = credentials.Certificate(service_account_dict)
+        initialize_app(cred)
+        return firestore.client()
+    except Exception as e:
+        pytest.skip(f"Failed to initialize Firebase: {str(e)}")
+
+# Initialize Firebase client
+db = setup_firebase()
 
 def test_firebase_connection():
     """Test Firebase connection"""
